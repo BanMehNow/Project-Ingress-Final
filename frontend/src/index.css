@@ -94,3 +94,19 @@ body {
   color: #ffffff;
   cursor: pointer;
 }
+
+.ingest-button {
+  margin-top: 18px;
+  width: 100%;
+  padding: 12px 18px;
+  border: none;
+  border-radius: 8px;
+  background: #6ca8ff;
+  color: #ffffff;
+  font-size: 1rem;
+  cursor: pointer;
+}
+
+.ingest-button:hover {
+  background: #4d92f0;
+}

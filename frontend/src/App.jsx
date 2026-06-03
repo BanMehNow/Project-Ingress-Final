@@ -11,6 +11,11 @@ function App() {
       setSelectedFile(file)
     }
   }
+
+  function handleIngest() {
+    console.log('URL:', url)
+    console.log('File:', selectedFile)
+  }
   return (
 
     <div className='App'>
@@ -33,7 +38,9 @@ function App() {
             onChange={handleFileChange}
           />
         </div>
-
+        <button className="ingest-button" onClick={handleIngest}>
+          Ingest
+        </button>
       </main>
     </div>
   )
