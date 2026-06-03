@@ -3,6 +3,14 @@ import './index.css'
 
 function App() {
   const [url, setUrl] = useState('')
+
+  function handleFileChange(event) {
+    const file = event.target.files[0]
+
+    if (file) {
+      setSelectedFile(file)
+    }
+  }
   return (
 
     <div className='App'>
@@ -12,12 +20,20 @@ function App() {
       <main className="ingestion-box">
         <div className="url-input">
           <input
-            type="text" 
+            type="text"
             placeholder="Enter source for ingestion..."
             value={url}
             onChange={(event) => setUrl(event.target.value)}
           />
         </div>
+        <div className='file-input'>
+          <input
+            type="file"
+            accept='.pdf, .csv, .json'
+            onChange={handleFileChange}
+          />
+        </div>
+
       </main>
     </div>
   )
