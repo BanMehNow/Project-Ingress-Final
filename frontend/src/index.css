@@ -152,3 +152,41 @@ body {
 .export-buttons button:hover {
   background: #1d2630;
 }
+
+.table-wrapper {
+  width: 100%;
+  margin-top: 1rem;
+  overflow-x: auto;
+}
+
+.preview-table {
+  width: 100%;
+  border-collapse: collapse;
+  background: white;
+  color: #111;
+  font-size: 0.9rem;
+}
+
+.preview-table th,
+.preview-table td {
+  border: 1px solid #ddd;
+  padding: 0.75rem;
+  text-align: left;
+  vertical-align: top;
+}
+
+.preview-table th {
+  background: #f2f2f2;
+  font-weight: bold;
+}
+
+.preview-table td {
+  max-width: 450px;
+  white-space: pre-wrap;
+  word-break: break-word;
+}
+
+.error-message {
+  color: #ff6b6b;
+  margin-top: 1rem;
+}
