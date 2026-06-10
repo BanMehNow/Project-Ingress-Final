@@ -162,21 +162,21 @@ body {
 .preview-table {
   width: 100%;
   border-collapse: collapse;
-  background: white;
-  color: #111;
+  background: #0f1419;
+  color: white;
   font-size: 0.9rem;
 }
 
 .preview-table th,
 .preview-table td {
-  border: 1px solid #ddd;
+  border: 1px solid #2a333d;
   padding: 0.75rem;
   text-align: left;
   vertical-align: top;
 }
 
 .preview-table th {
-  background: #f2f2f2;
+  background: #6ca8ff;
   font-weight: bold;
 }
 
