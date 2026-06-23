@@ -72,36 +72,52 @@ function App() {
     URL.revokeObjectURL(fileUrl)
   }
 
-  function escapeCsvValue(value) {
-    if (value === null || value === undefined) {
-      return ''
-    }
-
-    const stringValue = String(value)
-    const escapedValue = stringValue.replaceAll('"', '""')
-
-    return `"${escapedValue}"`
+function escapeCsvValue(value) {
+  if (value === null || value === undefined) {
+    return ''
   }
 
-  function handleDownloadDataset() {
-    if (!result) {
-      return
-    }
+  const formattedValue = Array.isArray(value)
+    ? JSON.stringify(value)
+    : String(value)
 
-    const columns = ['url', 'title', 'content']
+  const escapedValue = formattedValue.replaceAll('"', '""')
 
-    const headerRow = columns
-      .map(escapeCsvValue)
-      .join(',')
+  return `"${escapedValue}"`
+}
 
-    const dataRow = columns
-      .map((column) => escapeCsvValue(result[column]))
-      .join(',')
-
-    const csvContent = [headerRow, dataRow].join('\n')
-
-    downloadFile('project-ingress-result.csv', csvContent, 'text/csv')
+function handleDownloadDataset() {
+  if (!result) {
+    return
   }
+
+  const columns = [
+    'url',
+    'title',
+    'description',
+    'body_text',
+    'headings',
+    'links',
+    'word_count',
+    'status_code',
+  ]
+
+  const headerRow = columns
+    .map(escapeCsvValue)
+    .join(',')
+
+  const dataRow = columns
+    .map((column) => escapeCsvValue(result[column]))
+    .join(',')
+
+  const csvContent = [headerRow, dataRow].join('\n')
+
+  downloadFile(
+    'project-ingress-result.csv',
+    csvContent,
+    'text/csv;charset=utf-8'
+  )
+}
 
   function handleDownloadDataBook() {
     if (!result) {
