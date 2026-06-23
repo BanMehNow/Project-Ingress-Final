@@ -7,6 +7,7 @@ function App() {
   const [ingested, setIngested] = useState(false)
 
   const [result, setResult] = useState(null)
+  const [columns, setColumns] = useState([])
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState('')
 
@@ -21,6 +22,7 @@ function App() {
   async function handleIngest() {
     setError('')
     setResult(null)
+    setColumns([])
     setIngested(false)
 
     if (!url.trim()) {
@@ -48,6 +50,7 @@ function App() {
       const data = await response.json()
 
       setResult(data.sample[0])
+      setColumns(data.columns)
       setIngested(true)
     } catch (err) {
       console.error(err)
@@ -185,7 +188,12 @@ The content was parsed from the provided webpage using the Project Ingress backe
                 <tr>
                   <th>URL</th>
                   <th>Title</th>
-                  <th>Content</th>
+                  <th>Description</th>
+                  <th>Body Text</th>
+                  <th>Headings</th>
+                  <th>Links</th>
+                  <th>Word Count</th>
+                  <th>Status Code</th>
                 </tr>
               </thead>
 
@@ -193,7 +201,12 @@ The content was parsed from the provided webpage using the Project Ingress backe
                 <tr>
                   <td>{result.url}</td>
                   <td>{result.title}</td>
-                  <td>{result.content}</td>
+                  <td>{result.description}</td>
+                  <td>{result.body_text}</td>
+                  <td>{result.headings.join(', ')}</td>
+                  <td>{result.links.join(', ')}</td>
+                  <td>{result.word_count}</td>
+                  <td>{result.status_code}</td>
                 </tr>
               </tbody>
             </table>
