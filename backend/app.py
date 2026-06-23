@@ -32,6 +32,15 @@ async def ingest_url(request: UrlRequest):
     return {
         "source": request.url,
         "detected_type": "webpage",
-        "columns": ["url", "title", "content"],
+        "columns": [
+    "url",
+    "title",
+    "description",
+    "body_text",
+    "headings",
+    "links",
+    "word_count",
+    "status_code"
+],
         "sample": [scraped_data]
     }
