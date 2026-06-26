@@ -6,7 +6,7 @@ function App() {
   const [selectedFile, setSelectedFile] = useState(null)
   const [ingested, setIngested] = useState(false)
 
-  const [result, setResult] = useState(null)
+  const [result, setResult] = useState([])
   const [columns, setColumns] = useState([])
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState('')
@@ -21,27 +21,49 @@ function App() {
 
   async function handleIngest() {
     setError('')
-    setResult(null)
+    setResult([])
     setColumns([])
     setIngested(false)
 
-    if (!url.trim()) {
-      setError('Please enter a URL first.')
+    if (!url.trim() && !selectedFile) {
+      setError('Please enter a URL or choose a CSV file.')
       return
     }
 
     try {
       setLoading(true)
 
-      const response = await fetch('http://127.0.0.1:8000/ingest/url', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({
-          url: url,
-        }),
-      })
+      let response
+
+      if (selectedFile) {
+        const formData = new FormData()
+
+        formData.append('file', selectedFile)
+
+        response = await fetch('http://127.0.0.1:8000/ingest/file',
+          {
+            method: 'POST',
+            body: formData,
+          }
+        )
+      } else {
+        const normalisedUrl =
+          url.startsWith('http://') || url.startsWith('https://')
+            ? url : `https://${url}`
+
+        response = await fetch(
+          'http://127.0.0.1:8000/ingest/url',
+          {
+            method: 'POST',
+            headers: {
+              'Content-Type': 'application/json',
+            },
+            body: JSON.stringify({
+              url: normalisedUrl,
+            }),
+          }
+        )
+      }
 
       if (!response.ok) {
         throw new Error('Backend request failed.')
@@ -49,16 +71,18 @@ function App() {
 
       const data = await response.json()
 
-      setResult(data.sample[0])
+      setResult(data.sample)
       setColumns(data.columns)
       setIngested(true)
     } catch (err) {
       console.error(err)
-      setError('Something went wrong while ingesting the URL.')
+      setError('Something went wrong during ingestion.')
     } finally {
       setLoading(false)
     }
   }
+
+
 
   function downloadFile(filename, content, mimeType) {
     const blob = new Blob([content], { type: mimeType })
@@ -72,69 +96,67 @@ function App() {
     URL.revokeObjectURL(fileUrl)
   }
 
-function escapeCsvValue(value) {
-  if (value === null || value === undefined) {
-    return ''
+  function escapeCsvValue(value) {
+    if (value === null || value === undefined) {
+      return ''
+    }
+
+    const formattedValue = Array.isArray(value)
+      ? JSON.stringify(value)
+      : String(value)
+
+    const escapedValue = formattedValue.replaceAll('"', '""')
+
+    return `"${escapedValue}"`
   }
 
-  const formattedValue = Array.isArray(value)
-    ? JSON.stringify(value)
-    : String(value)
+  function handleDownloadDataset() {
+    if (result.length === 0) {
+      return
+    }
 
-  const escapedValue = formattedValue.replaceAll('"', '""')
+    const headerRow = columns
+      .map(escapeCsvValue)
+      .join(',')
 
-  return `"${escapedValue}"`
-}
+    const dataRows = result.map((row) =>
+      columns
+        .map((column) => escapeCsvValue(row[column]))
+        .join(',')
+    )
 
-function handleDownloadDataset() {
-  if (!result) {
-    return
+    const csvContent = [headerRow, ...dataRows].join('\n')
+
+    downloadFile(
+      'project-ingress-result.csv',
+      csvContent,
+      'text/csv;charset=utf-8'
+    )
   }
-
-  const columns = [
-    'url',
-    'title',
-    'description',
-    'body_text',
-    'headings',
-    'links',
-    'word_count',
-    'status_code',
-  ]
-
-  const headerRow = columns
-    .map(escapeCsvValue)
-    .join(',')
-
-  const dataRow = columns
-    .map((column) => escapeCsvValue(result[column]))
-    .join(',')
-
-  const csvContent = [headerRow, dataRow].join('\n')
-
-  downloadFile(
-    'project-ingress-result.csv',
-    csvContent,
-    'text/csv;charset=utf-8'
-  )
-}
 
   function handleDownloadDataBook() {
-    if (!result) {
+    if (result.length === 0) {
       return
     }
 
     const createdAt = new Date().toLocaleString()
 
+    const source = selectedFile ? selectedFile.name : url
+    const detectedType = selectedFile ? 'csv' : 'webpage'
+
+    const columnList = columns
+      .map((column) => `- ${column}`)
+      .join('\n')
+
     const databookContent = `# Project Ingress DataBook
 
 ## Source
 
-${result.url}
+${source}
 
 ## Page Title
 
-${result.title}
+${title}
 
 ## Created At
 
@@ -142,21 +164,20 @@ ${createdAt}
 
 ## Detected Type
 
-webpage
+${detectedType}
+
+## Row Count
+
+${result.length}
 
 ## Columns
 
-- url
-- title
-- content
+${columnList}
 
 ## Notes
 
-This DataBook describes a single URL ingestion result.
-
-The content was parsed from the provided webpage using the Project Ingress backend.
+This DataBook describes data processed using Project Ingress.
 `
-
     downloadFile('project-ingress-databook.md', databookContent, 'text/markdown')
   }
 
@@ -178,7 +199,7 @@ The content was parsed from the provided webpage using the Project Ingress backe
         <div className='file-input'>
           <input
             type="file"
-            accept='.pdf, .csv, .json'
+            accept='csv, .json'
             onChange={handleFileChange}
           />
         </div>
@@ -202,28 +223,30 @@ The content was parsed from the provided webpage using the Project Ingress backe
             <table className="preview-table">
               <thead>
                 <tr>
-                  <th>URL</th>
-                  <th>Title</th>
-                  <th>Description</th>
-                  <th>Body Text</th>
-                  <th>Headings</th>
-                  <th>Links</th>
-                  <th>Word Count</th>
-                  <th>Status Code</th>
+                  {columns.map((column) => (
+                    <th key={column}>
+                      {column}
+                    </th>
+                  ))}
                 </tr>
               </thead>
 
               <tbody>
-                <tr>
-                  <td>{result.url}</td>
-                  <td>{result.title}</td>
-                  <td>{result.description}</td>
-                  <td>{result.body_text}</td>
-                  <td>{result.headings.join(', ')}</td>
-                  <td>{result.links.join(', ')}</td>
-                  <td>{result.word_count}</td>
-                  <td>{result.status_code}</td>
-                </tr>
+                {result.map((row, rowIndex) => (
+                  <tr key={rowIndex}>
+                    {columns.map((column) => {
+                      const value = row[column]
+
+                      return (
+                        <td key={column}>
+                          {Array.isArray(value)
+                            ? value.join(', ')
+                            : String(value ?? '')}
+                        </td>
+                      )
+                    })}
+                  </tr>
+                ))}
               </tbody>
             </table>
           </div>
