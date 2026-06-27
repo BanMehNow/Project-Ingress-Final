@@ -11,14 +11,6 @@ function App() {
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState('')
 
-  function handleFileChange(event) {
-    const file = event.target.files[0]
-
-    if (file) {
-      setSelectedFile(file)
-    }
-  }
-
   async function handleIngest() {
     setError('')
     setResult([])
@@ -47,9 +39,8 @@ function App() {
           }
         )
       } else {
-        const normalisedUrl =
-          url.startsWith('http://') || url.startsWith('https://')
-            ? url : `https://${url}`
+
+        const normalisedUrl = url.startsWith('http') ? url : `https://${url}`
 
         response = await fetch(
           'http://127.0.0.1:8000/ingest/url',
@@ -82,32 +73,10 @@ function App() {
     }
   }
 
-
-
-  function downloadFile(filename, content, mimeType) {
-    const blob = new Blob([content], { type: mimeType })
-    const fileUrl = URL.createObjectURL(blob)
-
-    const link = document.createElement('a')
-    link.href = fileUrl
-    link.download = filename
-    link.click()
-
-    URL.revokeObjectURL(fileUrl)
-  }
-
   function escapeCsvValue(value) {
-    if (value === null || value === undefined) {
-      return ''
-    }
-
-    const formattedValue = Array.isArray(value)
-      ? JSON.stringify(value)
-      : String(value)
-
-    const escapedValue = formattedValue.replaceAll('"', '""')
-
-    return `"${escapedValue}"`
+    if (value === null || value === undefined) return ''
+    const str = Array.isArray(value) ? JSON.stringify(value) : String(value)
+    return `"${str.replaceAll('"', '""')}"`
   }
 
   function handleDownloadDataset() {
@@ -127,11 +96,12 @@ function App() {
 
     const csvContent = [headerRow, ...dataRows].join('\n')
 
-    downloadFile(
-      'project-ingress-result.csv',
-      csvContent,
-      'text/csv;charset=utf-8'
-    )
+    const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8' })
+    const link = document.createElement('a')
+    link.href = URL.createObjectURL(blob)
+    link.download = 'project-ingress-result.csv'
+    link.click()
+
   }
 
   function handleDownloadDataBook() {
@@ -178,7 +148,11 @@ ${columnList}
 
 This DataBook describes data processed using Project Ingress.
 `
-    downloadFile('project-ingress-databook.md', databookContent, 'text/markdown')
+    const blob = new Blob([databookContent], { type: 'text/markdown' })
+    const link = document.createElement('a')
+    link.href = URL.createObjectURL(blob)
+    link.download = 'project-ingress-databook.md'
+    link.click()
   }
 
   return (
@@ -199,8 +173,8 @@ This DataBook describes data processed using Project Ingress.
         <div className='file-input'>
           <input
             type="file"
-            accept='csv, .json'
-            onChange={handleFileChange}
+            accept='.csv, .json'
+            onChange={(e) => setSelectedFile(e.target.files[0])}
           />
         </div>
         <button
@@ -235,13 +209,12 @@ This DataBook describes data processed using Project Ingress.
                 {result.map((row, rowIndex) => (
                   <tr key={rowIndex}>
                     {columns.map((column) => {
-                      const value = row[column]
-
                       return (
                         <td key={column}>
-                          {Array.isArray(value)
-                            ? value.join(', ')
-                            : String(value ?? '')}
+                          {Array.isArray(row[column])
+                            ? row[column].join(', ')
+                            : String(row[column] ?? '')}
+
                         </td>
                       )
                     })}

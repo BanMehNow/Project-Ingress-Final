@@ -58,16 +58,14 @@ async def scrape_url(url: str):
                     if link
                 ]
 
-                cleaned_body_text = body_text.strip()
-
                 return {
                     "url": url,
                     "title": title,
                     "description": description,
-                    "body_text": cleaned_body_text,
+                    "body_text": body_text.strip(),
                     "headings": headings,
                     "links": links,
-                    "word_count": len(cleaned_body_text.split()),
+                    "word_count": len(body_text.split()),
                     "status_code": (
                         response.status if response else None
                     )

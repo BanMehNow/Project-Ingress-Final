@@ -1,14 +1,9 @@
-from fastapi import FastAPI
+from fastapi import FastAPI, File, UploadFile
 from pydantic import BaseModel
 from scraper import scrape_url
 from fastapi.middleware.cors import CORSMiddleware
 from io import BytesIO
-
 import pandas as pd
-from fastapi import FastAPI, File, UploadFile
-from pydantic import BaseModel
-
-from scraper import scrape_url
 
 app = FastAPI()
 
@@ -40,15 +35,16 @@ async def ingest_url(request: UrlRequest):
         "source": request.url,
         "detected_type": "webpage",
         "columns": [
-    "url",
-    "title",
-    "description",
-    "body_text",
-    "headings",
-    "links",
-    "word_count",
-    "status_code"
-],
+            "url",
+            "title",
+            "description",
+            "body_text",
+            "headings",
+            "links",
+            "word_count",
+            "status_code"
+        ],
+
         "sample": [scraped_data]
     }
 
@@ -57,11 +53,9 @@ async def ingest_file(file: UploadFile = File(...)):
     contents = await file.read()
 
     dataframe = pd.read_csv(BytesIO(contents))
+    dataframe = dataframe.where(pd.notna(dataframe), None)
 
-    dataframe = dataframe.astype(object).where(
-        pd.notna(dataframe),
-        None
-    )
+
 
     return {
         "source": file.filename,
