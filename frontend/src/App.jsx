@@ -124,10 +124,6 @@ function App() {
 
 ${source}
 
-## Page Title
-
-${title}
-
 ## Created At
 
 ${createdAt}
@@ -152,6 +148,25 @@ This DataBook describes data processed using Project Ingress.
     const link = document.createElement('a')
     link.href = URL.createObjectURL(blob)
     link.download = 'project-ingress-databook.md'
+    link.click()
+  }
+
+  function handleDownloadDataBookJson() {
+    if (result.length === 0) return
+
+    const databook = {
+      source: selectedFile ? selectedFile.name : url,
+      detected_type: selectedFile ? 'csv' : 'webpage',
+      created_at: new Date().toLocaleString(),
+      columns: columns,
+      row_count: result.length,
+      sample: result
+    }
+
+    const blob = new Blob([JSON.stringify(databook)], { type: 'application/json' })
+    const link = document.createElement('a')
+    link.href = URL.createObjectURL(blob)
+    link.download = 'project-ingress-databook.json'
     link.click()
   }
 
@@ -231,6 +246,10 @@ This DataBook describes data processed using Project Ingress.
 
             <button onClick={handleDownloadDataBook}>
               Download DataBook
+            </button>
+
+            <button onClick={handleDownloadDataBookJson}>
+              Download DataBook (JSON)
             </button>
           </div>
         </section>

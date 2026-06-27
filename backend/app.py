@@ -4,6 +4,7 @@ from scraper import scrape_url
 from fastapi.middleware.cors import CORSMiddleware
 from io import BytesIO
 import pandas as pd
+import json
 
 app = FastAPI()
 
@@ -52,10 +53,17 @@ async def ingest_url(request: UrlRequest):
 async def ingest_file(file: UploadFile = File(...)):
     contents = await file.read()
 
+    if file.filename.endswith('.json'):
+        data = json.loads(contents)
+        return {
+            "source": file.filename,
+            "detected_type": "databook",
+            "columns": data["columns"],
+            "sample": data["sample"]
+        }
+
     dataframe = pd.read_csv(BytesIO(contents))
     dataframe = dataframe.where(pd.notna(dataframe), None)
-
-
 
     return {
         "source": file.filename,
